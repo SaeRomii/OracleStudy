@@ -1,0 +1,230 @@
+SELECT USER
+FROM DUAL;
+--==> SCOTT
+
+--¡Û TBL_JUMUNBACKUP Å×ÀÌºí°ú TBL_JUMUN Å×ÀÌºí¿¡¼­
+--   Á¦Ç°ÄÚµå¿Í ÁÖ¹®·®ÀÇ °ªÀÌ ¶È°°Àº ÇàÀÇ Á¤º¸¸¦
+--   ÁÖ¹®¹øÈ£, Á¦Ç°ÄÚµå, ÁÖ¹®¼ö·®, ÁÖ¹®ÀÏÀÚ Ç×¸ñÀ¸·Î Á¶È¸ÇÑ´Ù.
+
+-- ¹æ¹ý1.
+SELECT JECODE, JUSU
+FROM TBL_JUMUNBACKUP
+INTERSECT
+SELECT JECODE, JUSU
+FROM TBL_JUMUN;
+--==>>
+/*
+²¿ºÏÄ¨	30
+¿ÍÅ¬	10
+Ä­ÃÝ	20
+Æ÷Ä«Ä¨	40
+È¨·±º¼	50
+*/
+
+SELECT JUNO, JECODE, JUSU, JUDAY
+FROM TBL_JUMUNBACKUP
+INTERSECT
+SELECT JUNO, JECODE, JUSU, JUDAY
+FROM TBL_JUMUN;
+--==>> Á¶È¸ °á°ú ¾øÀ½
+--JUDAY´Â ±³ÁýÇÕÀÌ ¾ø¾î¼­
+
+ALTER SESSION SET NLS_DATE_FORMAT = 'YYYY-MM-DD HH24:MI:SS';
+--==>> SessionÀÌ(°¡) º¯°æµÇ¾ú½À´Ï´Ù.
+
+SELECT T2.JUNO "ÁÖ¹®¹øÈ£", T1.JECODE "Á¦Ç°ÄÚµå", T1.JUSU "ÁÖ¹®¼ö·®", T2.JUDAY "ÁÖ¹®ÀÏÀÚ"
+FROM
+(
+    SELECT JECODE, JUSU
+    FROM TBL_JUMUNBACKUP
+    INTERSECT
+    SELECT JECODE, JUSU
+    FROM TBL_JUMUN
+) T1
+JOIN
+(
+    SELECT JUNO, JECODE, JUSU, JUDAY
+    FROM TBL_JUMUNBACKUP
+    UNION ALL
+    SELECT JUNO, JECODE, JUSU, JUDAY
+    FROM TBL_JUMUN
+) T2
+ON T1.JECODE = T2.JECODE
+AND T1.JUSU = T2.JUSU;
+--==>>
+/*
+2	    ¿ÍÅ¬	10	2001-11-01 09:23:37
+3	    ²¿ºÏÄ¨	30	2001-11-01 11:41:00
+5	    È¨·±º¼	50	2001-11-03 15:50:00
+8	    Æ÷Ä«Ä¨	40	2001-11-13 09:41:14
+10	    Ä­ÃÝ	20	2001-11-20 14:17:00
+938767	¿ÍÅ¬	10	2021-04-01 14:25:05
+938768	È¨·±º¼	50	2021-04-01 14:25:34
+938769	²¿ºÏÄ¨	30	2021-04-01 14:26:38
+938772	Æ÷Ä«Ä¨	40	2021-04-01 14:27:43
+938774	Ä­ÃÝ	20	2021-04-01 14:28:33
+*/
+
+
+-- ¹æ¹ý2
+SELECT *
+FROM
+(
+    SELECT JUNO, JECODE, JUSU, JUDAY
+    FROM TBL_JUMUNBACKUP
+    UNION ALL
+    SELECT JUNO, JECODE, JUSU, JUDAY
+    FROM TBL_JUMUN
+) T
+--WHERE JECODE||JUSU IN ('¿ÍÅ¬', '²¿ºÏÄ¨', 'È¨·±º¼', 'Æ÷Ä«Ä¨', 'Ä­ÃÝ')
+--WHERE CONCAT(JECODE, JUSU) IN ('¿ÍÅ¬10', '²¿ºÏÄ¨30', 'È¨·±º¼50', 'Æ÷Ä«Ä¨40', 'Ä­ÃÝ20')
+WHERE CONCAT(JECODE, JUSU) =ANY ('¿ÍÅ¬10', '²¿ºÏÄ¨30', 'È¨·±º¼50', 'Æ÷Ä«Ä¨40', 'Ä­ÃÝ20');
+
+
+SELECT CONCAT(JECODE, JUSU)
+FROM TBL_JUMUNBACKUP
+INTERSECT
+SELECT CONCAT(JECODE, JUSU)
+FROM TBL_JUMUN
+
+SELECT *
+FROM
+(
+    SELECT JUNO, JECODE, JUSU, JUDAY
+    FROM TBL_JUMUNBACKUP
+    UNION ALL
+    SELECT JUNO, JECODE, JUSU, JUDAY
+    FROM TBL_JUMUN
+) T
+WHERE CONCAT(JECODE, JUSU) =ANY (SELECT CONCAT(JECODE, JUSU)
+                                FROM TBL_JUMUNBACKUP
+                                INTERSECT
+                                SELECT CONCAT(JECODE, JUSU)
+                                FROM TBL_JUMUN);
+--==>>
+/*
+2	    ¿ÍÅ¬	10	2001-11-01 09:23:37
+3	    ²¿ºÏÄ¨	30	2001-11-01 11:41:00
+5	    È¨·±º¼	50	2001-11-03 15:50:00
+8	    Æ÷Ä«Ä¨	40	2001-11-13 09:41:14
+10	    Ä­ÃÝ	20	2001-11-20 14:17:00
+938767	¿ÍÅ¬	10	2021-04-01 14:25:05
+938768	È¨·±º¼	50	2021-04-01 14:25:34
+938769	²¿ºÏÄ¨	30	2021-04-01 14:26:38
+938772	Æ÷Ä«Ä¨	40	2021-04-01 14:27:43
+938774	Ä­ÃÝ	20	2021-04-01 14:28:33
+*/
+
+-- MINUS : Â÷ÁýÇÕ
+
+SELECT JECODE, JUSU
+FROM TBL_JUMUNBACKUP;
+--==>>
+/*
+ÂËµæÃÊÄÚÄ¨	20
+¿ÍÅ¬	    10
+²¿ºÏÄ¨	    30
+Ä¢ÃË	    12
+È¨·±º¼	    50
+¹Ù³ª³ªÅ±	40
+´«À»°¨ÀÚ	10
+Æ÷Ä«Ä¨	    40
+°¨ÀÚÄ¨	    20
+Ä­ÃÝ	    20
+*/
+
+SELECT JECODE, JUSU
+FROM TBL_JUMUN;
+--==>>
+/*
+È¨·±º¼	10
+ºóÃ÷	10
+¿ÍÅ¬	10
+È¨·±º¼	50
+²¿ºÏÄ¨	30
+²¿ºÏÄ¨	20
+²¿ºÏÄ¨	10
+Æ÷Ä«Ä¨	40
+Æ÷Ä«Ä¨	20
+Ä­ÃÝ	20
+Ä­ÃÝ	10
+*/
+
+SELECT JECODE, JUSU
+FROM TBL_JUMUNBACKUP
+MINUS
+SELECT JECODE, JUSU
+FROM TBL_JUMUN;
+--==>>
+/*
+°¨ÀÚÄ¨	    20
+´«À»°¨ÀÚ	10
+¹Ù³ª³ªÅ±	40
+ÂËµæÃÊÄÚÄ¨	20
+Ä¢ÃË	    12
+*/
+
+
+/*
+    A = {10, 20, 30, 40, 50}
+    B = {10, 20, 30}
+    
+    A - B = {40, 50}
+*/
+
+SELECT D.DEPTNO, D.DNAME, E.ENAME, E.SAL
+FROM EMP E JOIN DEPT D
+ON E.DEPTNO = D.DEPTNO;
+
+-- CHECK (±ÇÀåÇÏÁö ¾ÊÀ½) -- ¿À¶óÅ¬ÀÌ Á¶ÀÎÇØÁÖ´Â°Å¶ó¼­ 
+SELECT DEPTNO, DNAME, ENAME, SAL
+FROM EMP NATURAL JOIN DEPT;
+--==>>
+/*
+10	ACCOUNTING	CLARK	2450
+10	ACCOUNTING	KING    	5000
+10	ACCOUNTING	MILLER	1300
+20	RESEARCH    	JONES	2975
+20	RESEARCH    	FORD    	3000
+20	RESEARCH    	ADAMS	1100
+20	RESEARCH	    SMITH	800
+20	RESEARCH    	SCOTT	3000
+30	SALES	    WARD    	1250
+30	SALES	    TURNER	1500
+30	SALES	    ALLEN	1600
+30	SALES	    JAMES	950
+30	SALES	    BLAKE	2850
+30	SALES	    MARTIN	1250
+*/
+
+SELECT DEPTNO, DNAME, ENAME, SAL
+FROM EMP JOIN DEPT
+USING(DEPTNO);
+--==>>
+/*
+10	ACCOUNTING	CLARK	2450
+10	ACCOUNTING	KING	    5000
+10	ACCOUNTING	MILLER	1300
+20	RESEARCH	    JONES	2975
+20	RESEARCH	    FORD	    3000
+20	RESEARCH	    ADAMS	1100
+20	RESEARCH	    SMITH	800
+20	RESEARCH	    SCOTT	3000
+30	SALES	    WARD    	1250
+30	SALES	    TURNER	1500
+30	SALES	    ALLEN	1600
+30	SALES	    JAMES	950
+30	SALES	    BLAKE	2850
+30	SALES	    MARTIN	1250
+*/
+
+
+
+
+
+
+
+
+
+
+
